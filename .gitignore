@@ -7,6 +7,31 @@ wheels/
 *.egg-info
 
 # Virtual environments
-.venv
-/uploads
+.venv/
+venv/
+
+# Local data
+/uploads/
+/qdrant_storage/
+/logs/
+
+# Environment files
 .env
+.env.local
+.env.*.local
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+*.cover
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

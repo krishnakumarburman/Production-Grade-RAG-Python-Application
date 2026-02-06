@@ -1,7 +1,7 @@
 [project]
 name = "ragproductionapp"
 version = "0.1.0"
-description = "Add your description here"
+description = "Production-grade RAG application with FastAPI, Qdrant, and OpenAI"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -10,8 +10,32 @@ dependencies = [
     "llama-index-core>=0.14.0",
     "llama-index-readers-file>=0.5.4",
     "openai>=1.107.0",
+    "pydantic-settings>=2.7.0",
     "python-dotenv>=1.1.1",
     "qdrant-client>=1.15.1",
     "streamlit>=1.49.1",
+    "tenacity>=9.0.0",
     "uvicorn>=0.35.0",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "httpx>=0.28.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
+    "pytest-cov>=7.0.0",
+]
+

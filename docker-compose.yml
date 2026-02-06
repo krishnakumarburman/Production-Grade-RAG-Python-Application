@@ -1,0 +1,93 @@
+# Docker Compose for RAG Application
+# Full stack: FastAPI + Streamlit + Qdrant + Inngest
+
+version: "3.9"
+
+services:
+  # Qdrant Vector Database
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: rag-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6333/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Inngest Dev Server
+  inngest:
+    image: inngest/inngest:latest
+    container_name: rag-inngest
+    ports:
+      - "8288:8288"
+    command: ["inngest", "dev", "--no-poll", "--no-discovery"]
+    environment:
+      - INNGEST_DEV_URL=http://api:8000/api/inngest
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # FastAPI Backend
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag-api
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_COLLECTION=docs
+      - APP_ENV=production
+      - LOG_LEVEL=INFO
+    volumes:
+      - uploads_data:/app/uploads
+      - logs_data:/app/logs
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/live')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Streamlit Frontend
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile.streamlit
+    container_name: rag-streamlit
+    ports:
+      - "8501:8501"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - INNGEST_API_BASE=http://inngest:8288/v1
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      - api
+      - inngest
+    restart: unless-stopped
+
+volumes:
+  qdrant_data:
+    driver: local
+  uploads_data:
+    driver: local
+  logs_data:
+    driver: local
+
+networks:
+  default:
+    name: rag-network
